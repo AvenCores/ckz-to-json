@@ -80,6 +80,14 @@ chmod +x build.sh               # если потерялся бит испол�
 Бинарникам macOS из unofficial-сборок может потребоваться снятие карантина:
 `xattr -d com.apple.quarantine ./ckz2json-darwin-arm64`.
 
+Windows-экземпляры содержат встроенную информацию о программе (свойства файла:
+название, описание, версия, правообладание) — ресурсы `cmd/ckz2json/*.syso`
+закоммичены; после изменения `cmd/ckz2json/winres.json` регенерировать:
+
+```
+go run github.com/tc-hib/go-winres@latest make --arch amd64,arm64,386 --in cmd/ckz2json/winres.json --out cmd/ckz2json/winres
+```
+
 ## Использование
 
 ```powershell
