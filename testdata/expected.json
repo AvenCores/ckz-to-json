@@ -1,0 +1,17 @@
+[
+  {
+    "greeting": "привет",
+    "items": [
+      1,
+      2,
+      3
+    ],
+    "nested": {
+      "ok": true
+    }
+  },
+  {
+    "secret": "second-line",
+    "value": 42
+  }
+]
