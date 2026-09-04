@@ -133,7 +133,7 @@ func run() error {
 	}
 
 	if cfg.check {
-		if !runCheck(&cfg, inputs) {
+		if !runCheck(inputs) {
 			return errSilent
 		}
 		if !cfg.quiet {
@@ -247,7 +247,7 @@ func resolvePassword(cfg *config) (string, error) {
 
 // ---- режимы ----
 
-func runCheck(cfg *config, inputs []string) bool {
+func runCheck(inputs []string) bool {
 	ok := true
 	for _, in := range inputs {
 		records, err := readRecords(in)
