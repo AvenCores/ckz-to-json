@@ -224,3 +224,10 @@ func TestVersion(t *testing.T) {
 		t.Fatalf("version: %q", r.stdout)
 	}
 }
+
+func TestNoArgsWithoutTerminal(t *testing.T) {
+	r := runCLI(t, t.TempDir(), nil)
+	if r.code != 1 || !strings.Contains(r.stderr, "не указаны входные файлы") {
+		t.Fatalf("no-args non-tty: code=%d err=%s", r.code, r.stderr)
+	}
+}

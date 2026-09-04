@@ -54,9 +54,9 @@ func nativeDialog(patterns []string) (string, error) {
 		script := fmt.Sprintf(
 			"Add-Type -AssemblyName System.Windows.Forms;"+
 				"$f = New-Object System.Windows.Forms.OpenFileDialog;"+
-				"$f.Title = 'Выберите файл .ckz'; $f.Filter = '%s';"+
+				"$f.Title = 'Выберите файл (%s)'; $f.Filter = '%s';"+
 				"if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.FileName; exit 0 } else { exit 3 }",
-			filter)
+			strings.Join(patterns, ", "), filter)
 		out, err := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-Command", script).Output()
 		if err != nil {
 			if ee, ok := err.(*exec.ExitError); ok && ee.ExitCode() == 3 {
@@ -71,7 +71,7 @@ func nativeDialog(patterns []string) (string, error) {
 		return p, nil
 	case "darwin":
 		out, err := exec.Command("osascript", "-e",
-			`POSIX path of (choose file with prompt "Выберите файл .ckz")`).Output()
+			fmt.Sprintf(`POSIX path of (choose file with prompt "Выберите файл (%s)")`, strings.Join(patterns, ", "))).Output()
 		if err != nil {
 			if ee, ok := err.(*exec.ExitError); ok && ee.ExitCode() != 0 {
 				return "", ErrCanceled
@@ -86,7 +86,8 @@ func nativeDialog(patterns []string) (string, error) {
 	default: // linux & friends: zenity, then kdialog
 		if _, err := exec.LookPath("zenity"); err == nil {
 			out, err := exec.Command("zenity", "--file-selection",
-				"--title=Выберите файл .ckz", "--file-filter=CKZ files | *.ckz *.json").Output()
+				fmt.Sprintf("--title=Выберите файл (%s)", strings.Join(patterns, ", ")),
+				"--file-filter=Файлы | "+strings.Join(patterns, " ")).Output()
 			if err == nil {
 				if p := CleanPath(string(out)); p != "" {
 					return p, nil
@@ -98,7 +99,7 @@ func nativeDialog(patterns []string) (string, error) {
 			}
 		}
 		if _, err := exec.LookPath("kdialog"); err == nil {
-			out, err := exec.Command("kdialog", "--getopenfilename", ".", "*.ckz *.json").Output()
+			out, err := exec.Command("kdialog", "--getopenfilename", ".", strings.Join(patterns, " ")).Output()
 			if err == nil {
 				if p := CleanPath(string(out)); p != "" {
 					return p, nil
@@ -137,7 +138,7 @@ func pickTerminal(patterns []string) (string, error) {
 		fmt.Fprintf(os.Stderr, "В папке %s нет файлов %s\n", cwd, strings.Join(patterns, ", "))
 	}
 
-	line, err := ReadLine("Введите номер файла или путь к .ckz: ")
+	line, err := ReadLine(fmt.Sprintf("Введите номер файла или путь (%s): ", strings.Join(patterns, ", ")))
 	if err != nil {
 		return "", errors.New("файл не выбран")
 	}

@@ -109,7 +109,21 @@ func run() error {
 		fmt.Println("ckz2json", version)
 		return nil
 	}
+	if len(os.Args) == 1 && prompt.StdinIsTTY() {
+		return runInteractive()
+	}
 
+	files := append([]string{}, cfg.inputs...)
+	files = append(files, flag.Args()...)
+	err := execute(&cfg, files)
+	if err == nil {
+		prompt.WaitEnter("Нажмите Enter для закрытия... ")
+	}
+	return err
+}
+
+// execute runs one configured job (CLI flags or finished interactive menu).
+func execute(cfg *config, files []string) error {
 	var err error
 	cfg.format, err = normalizeFormat(cfg.format)
 	if err != nil {
@@ -125,8 +139,6 @@ func run() error {
 		return errors.New("в режиме шифрования --stdout недоступен")
 	}
 
-	files := append([]string{}, cfg.inputs...)
-	files = append(files, flag.Args()...)
 	inputs, err := cfg.resolveInputs(files)
 	if err != nil {
 		return err
@@ -139,14 +151,13 @@ func run() error {
 		if !cfg.quiet {
 			fmt.Println("Все файлы имеют корректную структуру .ckz.")
 		}
-		prompt.WaitEnter("Нажмите Enter для закрытия... ")
 		return nil
 	}
 
 	if cfg.password != "" && !cfg.quiet {
 		fmt.Fprintln(os.Stderr, "подсказка: пароль в командной строке виден в истории консоли - безопаснее ввести его со звездочками или передать через CKZ_PASSWORD")
 	}
-	password, err := resolvePassword(&cfg)
+	password, err := resolvePassword(cfg)
 	if err != nil {
 		return err
 	}
@@ -161,9 +172,9 @@ func run() error {
 	for _, in := range inputs {
 		var err error
 		if cfg.encrypt {
-			err = encryptFile(&cfg, in, pw)
+			err = encryptFile(cfg, in, pw)
 		} else {
-			err = decryptFile(&cfg, in, pw)
+			err = decryptFile(cfg, in, pw)
 		}
 		if err == nil {
 			continue
@@ -183,7 +194,6 @@ func run() error {
 	if failed > 0 {
 		return errSilent
 	}
-	prompt.WaitEnter("Нажмите Enter для закрытия... ")
 	return nil
 }
 
