@@ -22,12 +22,15 @@ var version = "dev"
 
 func main() {
 	if err := run(); err != nil {
+		code := 1
 		if errors.Is(err, prompt.ErrCanceled) {
-			fmt.Fprintln(os.Stderr, "Cancelled.")
-			os.Exit(2)
+			code = 2
+			fmt.Fprintln(os.Stderr, "Выбор отменен.")
+		} else {
+			fmt.Fprintln(os.Stderr, "Ошибка:", err)
 		}
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		prompt.WaitEnter("Нажмите Enter для закрытия... ")
+		os.Exit(code)
 	}
 }
 
@@ -43,19 +46,19 @@ type config struct {
 
 func (c *config) parseFlags() bool {
 	showVersion := false
-	flag.StringVar(&c.input, "i", "", "Path to a .ckz file (if omitted - file selection dialog)")
-	flag.StringVar(&c.input, "in", "", "Same as -i")
-	flag.StringVar(&c.password, "p", "", "Password (if omitted - hidden prompt or CKZ_PASSWORD env var)")
-	flag.StringVar(&c.password, "password", "", "Same as -p")
-	flag.StringVar(&c.output, "o", "", "Output .json file (default: <input>.json next to the input)")
-	flag.StringVar(&c.output, "out", "", "Same as -o")
-	flag.BoolVar(&c.stdout, "stdout", false, "Write the resulting JSON to stdout instead of a file")
-	flag.BoolVar(&c.noDialog, "no-dialog", false, "Never open GUI dialogs, pick files in the terminal")
-	flag.BoolVar(&c.force, "f", false, "Overwrite the output file if it already exists")
-	flag.BoolVar(&c.force, "force", false, "Same as -f")
-	flag.BoolVar(&c.quiet, "q", false, "Only report errors")
-	flag.BoolVar(&c.quiet, "quiet", false, "Same as -q")
-	flag.BoolVar(&showVersion, "version", false, "Print version and exit")
+	flag.StringVar(&c.input, "i", "", "Путь к .ckz файлу (если не указан - выбор файла)")
+	flag.StringVar(&c.input, "in", "", "То же, что -i")
+	flag.StringVar(&c.password, "p", "", "Пароль (если не указан - ввод со звездочками или CKZ_PASSWORD)")
+	flag.StringVar(&c.password, "password", "", "То же, что -p")
+	flag.StringVar(&c.output, "o", "", "Куда сохранить .json (по умолчанию <имя_входа>.json рядом с входом)")
+	flag.StringVar(&c.output, "out", "", "То же, что -o")
+	flag.BoolVar(&c.stdout, "stdout", false, "Вывести JSON в stdout вместо сохранения в файл")
+	flag.BoolVar(&c.noDialog, "no-dialog", false, "Не открывать окно выбора файла, выбирать в терминале")
+	flag.BoolVar(&c.force, "f", false, "Перезаписать выходной файл, если он уже существует")
+	flag.BoolVar(&c.force, "force", false, "То же, что -f")
+	flag.BoolVar(&c.quiet, "q", false, "Выводить только ошибки")
+	flag.BoolVar(&c.quiet, "quiet", false, "То же, что -q")
+	flag.BoolVar(&showVersion, "version", false, "Показать версию и выйти")
 	flag.Parse()
 	return showVersion
 }
@@ -85,7 +88,7 @@ func run() error {
 		return fmt.Errorf("%s: %w", input, err)
 	}
 	if len(records) == 0 {
-		return fmt.Errorf("%s: no JSON records found (expected {salt, iv, ct, adata, iter, ks, ts})", input)
+		return fmt.Errorf("%s: не найдены JSON-записи (ожидался объект {salt, iv, ct, adata, iter, ks, ts} или JSON-Lines)", input)
 	}
 
 	values := make([]json.RawMessage, 0, len(records))
@@ -93,13 +96,13 @@ func run() error {
 		plain, err := rec.Decrypt([]byte(password))
 		if err != nil {
 			if errors.Is(err, ckz.ErrDecrypt) {
-				return fmt.Errorf("record #%d of %s: wrong password or corrupted data", i+1, input)
+				return fmt.Errorf("запись #%d в %s: неверный пароль или поврежденные данные", i+1, input)
 			}
-			return fmt.Errorf("record #%d of %s: %w", i+1, input, err)
+			return fmt.Errorf("запись #%d в %s: %w", i+1, input, err)
 		}
 		v, err := jsonValue(plain)
 		if err != nil {
-			return fmt.Errorf("record #%d of %s: %w", i+1, input, err)
+			return fmt.Errorf("запись #%d в %s: %w", i+1, input, err)
 		}
 		values = append(values, v)
 	}
@@ -114,14 +117,18 @@ func run() error {
 		os.Stdout.Write([]byte("\n"))
 		return nil
 	}
-	return writeOutput(&cfg, input, exported)
+	if err := writeOutput(&cfg, input, exported); err != nil {
+		return err
+	}
+	prompt.WaitEnter("Нажмите Enter для закрытия... ")
+	return nil
 }
 
 func resolveInput(cfg *config) (string, error) {
 	if cfg.input != "" {
 		p := prompt.CleanPath(cfg.input)
 		if _, err := os.Stat(p); err != nil {
-			return "", fmt.Errorf("file not found: %s", p)
+			return "", fmt.Errorf("файл не найден: %s", p)
 		}
 		return p, nil
 	}
@@ -139,7 +146,7 @@ func resolvePassword(cfg *config) (string, error) {
 	if env := os.Getenv("CKZ_PASSWORD"); env != "" {
 		return env, nil
 	}
-	return prompt.Password("Enter password: ")
+	return prompt.Password("Введите пароль: ")
 }
 
 // jsonValue turns decrypted bytes into a JSON value: verbatim if the
@@ -180,14 +187,14 @@ func writeOutput(cfg *config, input string, exported []byte) error {
 		dir, base := filepath.Split(input)
 		out = filepath.Join(dir, strings.TrimSuffix(base, filepath.Ext(base))+".json")
 		if _, err := os.Stat(out); err == nil && !cfg.force {
-			return fmt.Errorf("%s already exists (use -f/--force to overwrite or -o to choose another path)", out)
+			return fmt.Errorf("файл %s уже существует (перезапись: -f/--force, либо укажите другой путь через -o)", out)
 		}
 	}
 	if err := os.WriteFile(out, append(exported, '\n'), 0o644); err != nil {
 		return err
 	}
 	if !cfg.quiet {
-		fmt.Printf("Exported: %s\n", out)
+		fmt.Printf("Файл сохранен по пути: %s\n", out)
 	}
 	return nil
 }

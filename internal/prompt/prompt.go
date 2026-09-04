@@ -33,3 +33,12 @@ func CleanPath(p string) string {
 	p = strings.Trim(p, `"'`)
 	return strings.TrimSpace(p)
 }
+
+// WaitEnter blocks until Enter is pressed. It does nothing when stdin is
+// not a terminal (piped/CI runs).
+func WaitEnter(prompt string) {
+	if !StdinIsTTY() {
+		return
+	}
+	_, _ = ReadLine(prompt)
+}

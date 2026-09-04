@@ -13,7 +13,7 @@ import (
 )
 
 // ErrCanceled is returned when the user cancels the selection.
-var ErrCanceled = errors.New("selection canceled")
+var ErrCanceled = errors.New("выбор отменен")
 
 // File asks the user to pick a file: first via the native OS dialog
 // (when running in a terminal and allowed), then via a terminal picker.
@@ -24,9 +24,10 @@ func File(noDialog bool, patterns ...string) (string, error) {
 		patterns = []string{"*.ckz"}
 	}
 	if !StdinIsTTY() {
-		return "", errors.New("no terminal: pass the file with -i/--in")
+		return "", errors.New("нет терминала: укажите файл флагом -i/--in")
 	}
 	if !noDialog {
+		fmt.Fprintf(os.Stderr, "Открывается окно выбора файла %s... Выберите файл в диалоге.\n", strings.Join(patterns, ", "))
 		p, err := nativeDialog(patterns)
 		switch {
 		case err == nil:
@@ -53,7 +54,7 @@ func nativeDialog(patterns []string) (string, error) {
 		script := fmt.Sprintf(
 			"Add-Type -AssemblyName System.Windows.Forms;"+
 				"$f = New-Object System.Windows.Forms.OpenFileDialog;"+
-				"$f.Title = 'Select CKZ file'; $f.Filter = '%s';"+
+				"$f.Title = 'Выберите файл .ckz'; $f.Filter = '%s';"+
 				"if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.FileName; exit 0 } else { exit 3 }",
 			filter)
 		out, err := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-Command", script).Output()
@@ -70,7 +71,7 @@ func nativeDialog(patterns []string) (string, error) {
 		return p, nil
 	case "darwin":
 		out, err := exec.Command("osascript", "-e",
-			`POSIX path of (choose file with prompt "Select CKZ file")`).Output()
+			`POSIX path of (choose file with prompt "Выберите файл .ckz")`).Output()
 		if err != nil {
 			if ee, ok := err.(*exec.ExitError); ok && ee.ExitCode() != 0 {
 				return "", ErrCanceled
@@ -85,7 +86,7 @@ func nativeDialog(patterns []string) (string, error) {
 	default: // linux & friends: zenity, then kdialog
 		if _, err := exec.LookPath("zenity"); err == nil {
 			out, err := exec.Command("zenity", "--file-selection",
-				"--title=Select CKZ file", "--file-filter=CKZ files | *.ckz *.json").Output()
+				"--title=Выберите файл .ckz", "--file-filter=CKZ files | *.ckz *.json").Output()
 			if err == nil {
 				if p := CleanPath(string(out)); p != "" {
 					return p, nil
@@ -128,27 +129,27 @@ func pickTerminal(patterns []string) (string, error) {
 	sort.Strings(names)
 
 	if len(names) > 0 {
-		fmt.Fprintf(os.Stderr, "Files matching %s in %s:\n", strings.Join(patterns, ", "), cwd)
+		fmt.Fprintf(os.Stderr, "Доступные файлы %s в %s:\n", strings.Join(patterns, ", "), cwd)
 		for i, n := range names {
 			fmt.Fprintf(os.Stderr, "  [%d] %s\n", i+1, n)
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "No %s files found in %s\n", strings.Join(patterns, ", "), cwd)
+		fmt.Fprintf(os.Stderr, "В папке %s нет файлов %s\n", cwd, strings.Join(patterns, ", "))
 	}
 
-	line, err := ReadLine("Enter file number or path: ")
+	line, err := ReadLine("Введите номер файла или путь к .ckz: ")
 	if err != nil {
-		return "", errors.New("no file selected")
+		return "", errors.New("файл не выбран")
 	}
 	if n, convErr := strconv.Atoi(line); convErr == nil && n >= 1 && n <= len(names) {
 		return filepath.Join(cwd, names[n-1]), nil
 	}
 	p := CleanPath(line)
 	if p == "" {
-		return "", errors.New("no file selected")
+		return "", errors.New("файл не выбран")
 	}
 	if _, err := os.Stat(p); err != nil {
-		return "", fmt.Errorf("file not found: %s", p)
+		return "", fmt.Errorf("файл не найден: %s", p)
 	}
 	return p, nil
 }

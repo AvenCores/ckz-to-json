@@ -23,10 +23,10 @@ const (
 	enableEchoInput = 0x0004
 )
 
-// Password reads a password from the console without echoing it.
+// Password reads a password from the console, echoing '*' per character.
 func Password(prompt string) (string, error) {
 	if !StdinIsTTY() {
-		return "", errors.New("no terminal: pass the password with -p/--password or CKZ_PASSWORD")
+		return "", errors.New("нет терминала: передайте пароль флагом -p/--password или переменной CKZ_PASSWORD")
 	}
 	h := uintptr(syscall.Handle(syscall.Stdin))
 	var mode uint32
@@ -59,12 +59,14 @@ func Password(prompt string) (string, error) {
 		case c == 0x08: // backspace
 			if len(runes) > 0 {
 				runes = runes[:len(runes)-1]
+				fmt.Fprint(os.Stderr, "\b \b")
 			}
 			pendingHigh = 0
 		case utf16.IsSurrogate(rune(c)):
 			if pendingHigh != 0 {
 				if dc := utf16.DecodeRune(rune(pendingHigh), rune(c)); dc != 0xFFFD {
 					runes = append(runes, dc)
+					fmt.Fprint(os.Stderr, "*")
 				}
 				pendingHigh = 0
 			} else {
@@ -73,6 +75,7 @@ func Password(prompt string) (string, error) {
 		case c >= 0x20:
 			pendingHigh = 0
 			runes = append(runes, rune(c))
+			fmt.Fprint(os.Stderr, "*")
 		}
 	}
 }

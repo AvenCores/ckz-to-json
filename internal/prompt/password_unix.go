@@ -11,44 +11,60 @@ import (
 	"strings"
 )
 
-// Password reads a password from the terminal without echoing it.
+// Password reads a password from the terminal, echoing '*' per character.
 //
-// Echo toggling relies on stty (POSIX terminals); reading happens via
-// /dev/tty when possible. If neither is available, falls back to a plain
-// line read and warns the user.
+// Character-at-a-time mode is set up via stty (-echo -icanon min 1);
+// reading happens via /dev/tty when possible. If stty is unavailable,
+// falls back to a plain line read and warns the user.
 func Password(prompt string) (string, error) {
 	if !StdinIsTTY() {
-		return "", errors.New("no terminal: pass the password with -p/--password or CKZ_PASSWORD")
+		return "", errors.New("нет терминала: передайте пароль флагом -p/--password или переменной CKZ_PASSWORD")
 	}
 
-	echoOff := false
-	if state := sttySave(); state != "" {
-		if sttySet("-echo") {
-			echoOff = true
-			defer sttyRestore(state)
+	tty := os.Stdin
+	if t, err := os.OpenFile("/dev/tty", os.O_RDWR, 0); err == nil {
+		defer t.Close()
+		tty = t
+	}
+
+	state := sttySave()
+	if state == "" || !sttySet("-echo", "-icanon", "min", "1") {
+		fmt.Fprint(tty, prompt)
+		line, err := bufio.NewReader(tty).ReadString('\n')
+		fmt.Fprintln(tty)
+		fmt.Fprintln(os.Stderr, "внимание: пароль выводится на экран (stty недоступен)")
+		if err != nil && line == "" {
+			return "", err
+		}
+		return strings.TrimRight(line, "\r\n"), nil
+	}
+	defer sttyRestore(state)
+
+	fmt.Fprint(tty, prompt)
+	r := bufio.NewReader(tty)
+	var runes []rune
+	for {
+		ch, _, err := r.ReadRune()
+		if err != nil {
+			fmt.Fprintln(tty)
+			return "", err
+		}
+		switch ch {
+		case '\n', '\r':
+			fmt.Fprintln(tty)
+			return string(runes), nil
+		case 0x7f, '\b':
+			if len(runes) > 0 {
+				runes = runes[:len(runes)-1]
+				fmt.Fprint(tty, "\b \b")
+			}
+		default:
+			if ch >= 0x20 {
+				runes = append(runes, ch)
+				fmt.Fprint(tty, "*")
+			}
 		}
 	}
-
-	from := os.Stdin
-	if tty, err := os.OpenFile("/dev/tty", os.O_RDWR, 0); err == nil {
-		defer tty.Close()
-		from = tty
-		fmt.Fprint(tty, prompt)
-	} else {
-		fmt.Fprint(os.Stderr, prompt)
-	}
-
-	line, err := bufio.NewReader(from).ReadString('\n')
-	if echoOff {
-		fmt.Fprintln(from)
-	}
-	if err != nil && line == "" {
-		return "", err
-	}
-	if !echoOff {
-		fmt.Fprintln(os.Stderr, "warning: password was echoed on screen (echo control unavailable)")
-	}
-	return strings.TrimRight(line, "\r\n"), nil
 }
 
 // sttySave returns the saved terminal state from "stty -g" or "" on failure.
