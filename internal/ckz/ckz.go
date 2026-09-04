@@ -94,6 +94,7 @@ func (e *Envelope) Decrypt(password []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer clear(key)
 	return ccm.Decrypt(key, nonce, ct, []byte(e.AData), *e.TS/8)
 }
 

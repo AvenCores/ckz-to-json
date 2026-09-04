@@ -1,0 +1,35 @@
+name: Предложение функции
+description: Idea for improvement
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какая проблема решается
+      description: Что сейчас неудобно/невозможно и почему.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+      description: Как это должно работать (пример команды/вывода).
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы
+      description: Другие варианты реализации, если есть.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Область
+      options:
+        - label: Форматы экспорта (csv/cookies.txt/что-то ещё)
+        - label: Интерактивный режим (выбор файла/пароля)
+        - label: Криптография/формат .ckz
+        - label: Сборка/CI
+        - label: Другое

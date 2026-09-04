@@ -3,20 +3,20 @@
     "#1": {
       "0419": {
         "fixed": {
-          "file_version": "1.0.0.0",
-          "product_version": "1.0.0.0"
+          "file_version": "1.1.0.0",
+          "product_version": "1.1.0.0"
         },
         "info": {
           "0419": {
             "Comments": "Расшифровка файлов cookies-backup-chrome (.ckz) в JSON",
             "CompanyName": "avencores",
             "FileDescription": "ckz2json - расшифровка .ckz и экспорт в JSON (AES-CCM + PBKDF2)",
-            "FileVersion": "1.0.0",
+            "FileVersion": "1.1.0",
             "InternalName": "ckz2json",
             "LegalCopyright": "GPL-3.0, автор: avencores",
             "OriginalFilename": "ckz2json.exe",
             "ProductName": "ckz2json",
-            "ProductVersion": "1.0.0"
+            "ProductVersion": "1.1.0"
           }
         }
       }

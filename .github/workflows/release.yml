@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-go@v6
         with:
@@ -22,10 +22,24 @@ jobs:
           go vet ./...
           go test ./...
 
+      - name: Sync Windows resource versions
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION:-dev}"
+          sed -i \
+            -e "s|\"file_version\": \"[^\"]*\"|\"file_version\": \"$VERSION.0\"|" \
+            -e "s|\"product_version\": \"[^\"]*\"|\"product_version\": \"$VERSION.0\"|" \
+            -e "s|\"FileVersion\": \"[^\"]*\"|\"FileVersion\": \"$VERSION\"|" \
+            -e "s|\"ProductVersion\": \"[^\"]*\"|\"ProductVersion\": \"$VERSION\"|" \
+            cmd/ckz2json/winres.json
+          go run github.com/tc-hib/go-winres@latest make --arch amd64,arm64,386 \
+            --in cmd/ckz2json/winres.json --out cmd/ckz2json/winres
+
       - name: Cross-compile
         run: |
           mkdir -p dist
-          VERSION="${GITHUB_REF_NAME:-dev}"
+          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION:-dev}"
           for p in linux_amd64 linux_arm64 darwin_amd64 darwin_arm64 windows_amd64 windows_arm64; do
             os="${p%_*}"; arch="${p#*_}"; ext=""
             [ "$os" = windows ] && ext=".exe"
@@ -36,13 +50,20 @@ jobs:
               -o "dist/$name$ext" ./cmd/ckz2json
             ( cd dist && zip -q "$name.zip" "$name$ext" )
           done
+          ( cd dist && sha256sum *.zip > SHA256SUMS.txt )
+          cat dist/SHA256SUMS.txt
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v5
         with:
           name: builds
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
 
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/*.zip
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
