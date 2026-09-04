@@ -1,9 +1,9 @@
 # Builds release binaries for linux/windows/darwin on amd64 and arm64.
 # - syncs the Windows file-version resources with the given version
 # - produces dist/ binaries, zips and SHA256SUMS.txt
-# Usage:  .\build.ps1 [-Version 1.1.0] [-SkipTests]
+# Usage:  .\build.ps1 [-Version 1.0.0] [-SkipTests]
 param(
-    [string]$Version = "1.1.0",
+    [string]$Version = "1.0.0",
     [switch]$SkipTests
 )
 

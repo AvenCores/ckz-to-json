@@ -2,11 +2,11 @@
 # Builds release binaries for linux/windows/darwin on amd64 and arm64.
 # - syncs the Windows file-version resources with the given version
 # - produces dist/ binaries, archives and SHA256SUMS.txt
-# Usage:  ./build.sh [version]   (default 1.1.0)
+# Usage:  ./build.sh [version]   (default 1.0.0)
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION="${1:-1.1.0}"
+VERSION="${1:-1.0.0}"
 DIST="dist"
 LDFLAGS="-s -w -X main.version=${VERSION}"
 APP="ckz2json"

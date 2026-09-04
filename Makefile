@@ -1,5 +1,5 @@
 APP     := ckz2json
-VERSION ?= 1.1.0
+VERSION ?= 1.0.0
 LDFLAGS := -s -w -X main.version=$(VERSION)
 PLATFORMS := linux_amd64 linux_arm64 darwin_amd64 darwin_arm64 windows_amd64 windows_arm64
 

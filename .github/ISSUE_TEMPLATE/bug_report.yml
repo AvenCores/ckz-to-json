@@ -15,7 +15,7 @@ body:
     attributes:
       label: Версия ckz2json
       description: Вывод команды `ckz2json --version`.
-      placeholder: "ckz2json 1.1.0"
+      placeholder: "ckz2json 1.0.0"
     validations:
       required: true
   - type: input
