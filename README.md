@@ -1,20 +1,19 @@
 <div align="center">
-    <a href="https://www.youtube.com/@avencores/" target="_blank">
-      <img src="https://github.com/user-attachments/assets/338bcd74-e3c3-4700-87ab-7985058bd17e" alt="YouTube" height="40">
-    </a>
-    <a href="https://t.me/avencoresyt" target="_blank">
-      <img src="https://github.com/user-attachments/assets/939f8beb-a49a-48cf-89b9-d610ee5c4b26" alt="Telegram" height="40">
-    </a>
-    <a href="https://vk.ru/avencoresreuploads" target="_blank">
-      <img src="https://github.com/user-attachments/assets/dc109dda-9045-4a06-95a5-3399f0e21dc4" alt="VK" height="40">
-    </a>
-    <a href="https://dzen.ru/avencores" target="_blank">
-      <img src="https://github.com/user-attachments/assets/bd55f5cf-963c-4eb8-9029-7b80c8c11411" alt="Dzen" height="40">
-    </a>
+  <a href="https://www.youtube.com/@avencores/" target="_blank">
+    <img src="https://github.com/user-attachments/assets/338bcd74-e3c3-4700-87ab-7985058bd17e" alt="YouTube" height="40">
+  </a>
+  <a href="https://t.me/avencoresyt" target="_blank">
+    <img src="https://github.com/user-attachments/assets/939f8beb-a49a-48cf-89b9-d610ee5c4b26" alt="Telegram" height="40">
+  </a>
+  <a href="https://vk.ru/avencoresreuploads" target="_blank">
+    <img src="https://github.com/user-attachments/assets/dc109dda-9045-4a06-95a5-3399f0e21dc4" alt="VK" height="40">
+  </a>
+  <a href="https://dzen.ru/avencores" target="_blank">
+    <img src="https://github.com/user-attachments/assets/bd55f5cf-963c-4eb8-9029-7b80c8c11411" alt="Dzen" height="40">
+  </a>
 </div>
 
-
-# ckz2json
+# 🔐 ckz2json
 
 <img width="1113" height="626" alt="WindowsTerminal_YjGohjNMjE" src="https://github.com/user-attachments/assets/0db7374f-6f4a-49af-b8f0-35d8a0e5153b" />
 
@@ -24,36 +23,36 @@
 
 Консольная утилита на Go: расшифровывает файлы `.ckz` (AES-CCM + PBKDF2-HMAC-SHA256)
 и экспортирует содержимое в JSON. Порт исходного Python-скрипта, переписанный
-**только на стандартной библиотеке Go** (без внешних зависимостей, чистый Go —
+только на стандартной библиотеке Go (без внешних зависимостей, чистый Go —
 одинаково собирается под все платформы без C-компилятора).
 
-## Возможности
+## ✨ Возможности
 
-- **встроенный интерактивный UI**: запуск без аргументов в терминале открывает меню,
-  в котором доступны все возможности флагов: режим (расшифровка `-e`/шифрование/проверка `-c`),
+- 🖥️ **Встроенный интерактивный UI**: запуск без аргументов в терминале открывает меню,
+  в котором доступны все возможности флагов: режим (расшифровка `-e` / шифрование / проверка `-c`),
   выбор файлов и папок (`-i`, пакетный режим), способ выбора (`--no-dialog`),
   формат (`--format`), вывод (`-o`, `--stdout`), параметры шифрования
   (`--iter`, `--key-bits`, `--tag-bits`, `--adata`), перезапись (`-f`), тихий режим (`-q`);
-- **оформление терминального UI**: баннер, очистка экрана при возврате в меню, пошаговые
+- 🎨 **Оформление терминального UI**: баннер, очистка экрана при возврате в меню, пошаговые
   заголовки, цветовая разметка (ANSI/VT на Windows 10+, cmd.exe/PowerShell/macOS/Linux),
   цвета автоматически отключаются при перенаправлении вывода в файл или pipe;
-- выбор `.ckz`-файла: информационное сообщение + диалог выбора файла ОС (Windows / macOS / Linux + zenity/kdialog),
+- 📂 **Выбор `.ckz`-файла**: информационное сообщение + диалог выбора файла ОС (Windows / macOS / Linux + zenity/kdialog),
   нумерованный список в терминале, drag&drop пути или флаг `-i`;
-- ввод пароля: скрытый ввод с отображением `*` вместо символов, флаг `-p` или переменная `CKZ_PASSWORD`;
-- после сохранения выводит путь к файлу и ждет нажатия Enter (окно не закрывается мгновенно
+- 🔑 **Ввод пароля**: скрытый ввод с отображением `*` вместо символов, флаг `-p` или переменная `CKZ_PASSWORD`;
+- ⏎ **После сохранения** выводит путь к файлу и ждет нажатия Enter (окно не закрывается мгновенно
   при запуске двойным кликом);
-- AES-CCM (tag 4–16 байт) + PBKDF2-HMAC-SHA256 — та же криптография, что в Python-версии;
-- несколько записей в файле (JSON и JSON-Lines) — поддерживаются обе разметки;
-- **форматы результата**: `json` (человекочитаемый; одна запись — объект, несколько — массив),
+- 🧮 **AES-CCM (tag 4–16 байт) + PBKDF2-HMAC-SHA256** — та же криптография, что в Python-версии;
+- 🗂️ **Несколько записей в файле** (JSON и JSON-Lines) — поддерживаются обе разметки;
+- 📄 **Форматы результата**: `json` (человекочитаемый; одна запись — объект, несколько — массив),
   `csv` (таблица cookies) и `cookies` — Netscape `cookies.txt` для импорта в браузер/curl;
-- **шифрование обратно**: `-e` превращает любой `.json` в корректный `.ckz`
+- 🔁 **Шифрование обратно**: `-e` превращает любой `.json` в корректный `.ckz`
   (настраиваемые `--iter`, `--key-bits`, `--tag-bits`, `--adata`);
-- **`-c/--check`** — диагностика структуры `.ckz` без пароля (число записей, iter/ks/ts, размеры полей);
-- **пакетный режим**: сколько угодно файлов и целые папки аргументами (или повторяя `-i`),
+- 🩺 **`-c/--check`** — диагностика структуры `.ckz` без пароля (число записей, iter/ks/ts, размеры полей);
+- 📦 **Пакетный режим**: сколько угодно файлов и целые папки аргументами (или повторяя `-i`),
   с одним паролем и итоговой сводкой;
-- пароль и производный ключ обнуляются в памяти после использования.
+- 🧹 **Безопасная очистка памяти**: пароль и производный ключ обнуляются в памяти после использования.
 
-## Формат CKZ
+## 🧾 Формат CKZ
 
 ```json
 {
@@ -67,27 +66,31 @@
 }
 ```
 
-Ключ: `PBKDF2-HMAC-SHA256(password, salt, iter)` длиной `ks/8` байт;
+Ключ: `PBKDF2-HMAC-SHA256(password, salt, iter)` длиной `ks/8` байт;  
 шифр: `AES-CCM(key, tag ts/8)`, nonce = `iv[:12]`, associated data = `adata`.
 
-## Сборка
+## 🛠️ Сборка
 
 Требуется Go 1.27+ (внешних зависимостей нет).
 
-```
+```bash
 make build        # текущая платформа -> dist/ckz2json
 make release      # linux/darwin/windows × amd64/arm64 -> dist/
 make test         # тесты (векторы сверены с Python-библиотекой cryptography)
 ```
 
-Windows PowerShell — то же самое + сборка zip-архивов:
+### 🪟 Windows PowerShell
+
+То же самое + сборка zip-архивов:
 
 ```powershell
 .\build.ps1                     # vet + test + 6 платформ + zip в dist\
 .\build.ps1 -Version 1.2.3 -SkipTests
 ```
 
-Linux/macOS — то же самое + сборка zip-архивов (или tar.gz, если нет `zip`):
+### 🐧 Linux / macOS
+
+То же самое + сборка zip-архивов (или `tar.gz`, если нет `zip`):
 
 ```bash
 chmod +x build.sh               # если потерялся бит исполнения
@@ -99,20 +102,23 @@ CI по тегу `v*` собирает все платформы, публику
 автоматические release notes (`sha256sum -c SHA256SUMS.txt` для проверки).
 
 Бинарникам macOS из unofficial-сборок может потребоваться снятие карантина:
-`xattr -d com.apple.quarantine ./ckz2json-darwin-arm64`.
+
+```bash
+xattr -d com.apple.quarantine ./ckz2json-darwin-arm64
+```
 
 Windows-экземпляры содержат встроенную иконку (`cmd/ckz2json/icon.ico`) и
 информацию о программе (свойства файла: название, описание, версия,
 правообладание) — ресурсы `cmd/ckz2json/*.syso` закоммичены; после изменения
 `cmd/ckz2json/winres.json` или `icon.ico` регенерировать:
 
-```
+```bash
 go run github.com/tc-hib/go-winres@latest make --arch amd64,arm64,386 --in cmd/ckz2json/winres.json --out cmd/ckz2json/winres
 ```
 
-## Использование
+## 🚀 Использование
 
-```powershell
+```bash
 # без аргументов — встроенное меню: все флаги доступны вопросами в терминале
 # (режим, файлы, формат, вывод, параметры шифрования, -f, -q)
 ./ckz2json
@@ -127,31 +133,31 @@ CKZ_PASSWORD=123 ./ckz2json -i data.ckz --out result.json -f
 ./ckz2json backups
 
 # cookies из нескольких экспортов в CSV и в Netscape cookies.txt
-./ckz2json --format csv  backups
+./ckz2json --format csv backups
 ./ckz2json --format cookies cookies.ckz     # -> cookies.cookies.txt
 
 # проверка структуры файла без пароля
 ./ckz2json -c data.ckz
 
-# обратной путь: собрать .ckz из JSON (для восстановления бэкапа расширения)
+# обратный путь: собрать .ckz из JSON (для восстановления бэкапа расширения)
 ./ckz2json -e -i cookies.json -p "pass" --iter 100000 --key-bits 256 --tag-bits 128
 ```
 
-Пример вывода:
+### 📝 Пример вывода
 
 ```text
 Файл сохранен по пути: C:\backups\data.json
 Нажмите Enter для закрытия...
 ```
 
-> Флаги должны стоять перед именами файлов: `ckz2json -f папка`, а не `ckz2json папка -f`.
+⚠️ Флаги должны стоять перед именами файлов: `ckz2json -f папка`, а не `ckz2json папка -f`.
 
 | Флаг | Описание |
-|---|---|
+| --- | --- |
 | `-i, --in` | входной файл или папка; можно повторять несколько раз (и/или аргументами). Без флага — выбор файла |
 | `-p, --password` | пароль (иначе — скрытый ввод со звёздочками или `CKZ_PASSWORD`) |
 | `-o, --out` | куда писать результат (только при одном входе; иначе имя формируется из входа) |
-| `--format` | `json` (по умолчанию) \| `csv` \| `cookies` (Netscape cookies.txt) |
+| `--format` | `json` (по умолчанию), `csv` или `cookies` (Netscape cookies.txt) |
 | `-e, --encrypt` | режим шифрования: `.json` → `.ckz` |
 | `-c, --check` | проверить структуру `.ckz` (пароль не нужен) |
 | `--iter` | PBKDF2 итераций при шифровании (0 = 100000) |
@@ -164,14 +170,14 @@ CKZ_PASSWORD=123 ./ckz2json -i data.ckz --out result.json -f
 | `-q, --quiet` | не выводить сообщения, только ошибки |
 | `--version` | версия |
 
-> Запуск `./ckz2json` без аргументов в терминале запускает встроенный интерактивный UI:
-> пошаговое меню, в котором можно задать всё, что задаётся флагами таблицы выше
-> (`--version` — только как флаг). Флаги по-прежнему работают и в комбинации: UI включается
-> только при полном отсутствии аргументов.
+Запуск `./ckz2json` без аргументов в терминале запускает встроенный интерактивный UI:
+пошаговое меню, в котором можно задать всё, что задаётся флагами таблицы выше
+(`--version` — только как флаг). Флаги по-прежнему работают и в комбинации: UI включается
+только при полном отсутствии аргументов.
 
 Коды выхода: `0` — успех, `1` — ошибка, `2` — пользователь отменил выбор.
 
-## Крипостойкость/совместимость
+## 🛡️ Крипостойкость / совместимость
 
 Реализация AES-CCM (NIST SP 800-38C) проверена 75+ векторами, сгенерированными
 библиотекой Python `cryptography` (AES-128/192/256-CCM; nonce 7–13 байт;
@@ -184,9 +190,9 @@ tag 4–16 байт; adata 0–65535 байт), PBKDF2 — векторами RF
 вывода нет. Дополнительно: fuzz-тест CCM (`go test -run FuzzCCM -fuzz FuzzCCM`)
 и сквозные e2e-тесты CLI (шифрование↔расшифровка, форматы, collision-защита, коды выхода).
 
-## Структура проекта
+## 📁 Структура проекта
 
-```
+```text
 cmd/ckz2json/          CLI: флаги, выбор файла/пароля, экспорт, e2e-тесты
 internal/ccm/          AES-CCM (шифрование/расшифрование) + векторы + fuzz
 internal/kdf/          PBKDF2-HMAC-SHA256 + встроенные векторы
@@ -196,10 +202,11 @@ internal/prompt/       выбор файла (диалоги ОС / термин
 build.sh / build.ps1 / Makefile  кросс-сборки linux/darwin/windows × amd64/arm64
 CHANGELOG.md           история версий (в релизах CI она генерируется автоматически)
 ```
-# 📜 Лицензия
 
-Проект распространяется под лицензией GPL-3.0. Полный текст лицензии содержится в файле [`LICENSE`](LICENSE).
+## 📜 Лицензия
 
----
-# 💰 Поддержать автора
-+ **SBER**: `2202 2050 1464 4675`
+Проект распространяется под лицензией GPL-3.0. Полный текст лицензии содержится в файле `LICENSE`.
+
+## 💰 Поддержать автора
+
+SBER: `2202 2050 1464 4675`
