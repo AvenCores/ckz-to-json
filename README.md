@@ -16,6 +16,8 @@
 
 # ckz2json
 
+<img width="1113" height="626" alt="WindowsTerminal_YjGohjNMjE" src="https://github.com/user-attachments/assets/0db7374f-6f4a-49af-b8f0-35d8a0e5153b" />
+
 Утилита предназначена для расшифровки файлов `.ckz`, полученных с помощью
 расширения Chrome [cookies-backup-chrome](https://github.com/candh/cookies-backup-chrome)
 (экспорт cookies с паролем), и экспорта их содержимого в JSON.
