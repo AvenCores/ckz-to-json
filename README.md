@@ -112,7 +112,8 @@ CKZ_PASSWORD=123 ./ckz2json -i data.ckz --out result.json -f
 Реализация AES-CCM (NIST SP 800-38C) проверена 75+ векторами, сгенерированными
 библиотекой Python `cryptography` (AES-128/192/256-CCM; nonce 7–13 байт;
 tag 4–16 байт; adata 0–65535 байт), PBKDF2 — векторами RFC 7914 и `cryptography`.
-`scripts/gen_testvectors.py` перегенерирует `testdata` при изменении формата.
+Все тестовые векторы и пример CKZ-записей встроены прямо в `*_test.go`-файлы —
+в проекте нет отдельных тестовых данных и генераторов.
 
 Неверный пароль или повреждённые данные всегда отклоняются по аутентификационному
 тегу (`record #N: wrong password or corrupted data`) — тихого «мусорного» вывода нет.
@@ -121,14 +122,11 @@ tag 4–16 байт; adata 0–65535 байт), PBKDF2 — векторами RF
 
 ```
 cmd/ckz2json/          CLI: флаги, выбор файла/пароля, экспорт
-internal/ccm/          AES-CCM (шифрование/расшифрование), тестовые векторы
-internal/kdf/          PBKDF2-HMAC-SHA256 + векторы
+internal/ccm/          AES-CCM (шифрование/расшифрование) + встроенные векторы
+internal/kdf/          PBKDF2-HMAC-SHA256 + встроенные векторы
 internal/ckz/          формат конверта CKZ, чтение записей, расшифровка
 internal/prompt/       выбор файла (диалоги ОС / терминал) и скрытый ввод пароля
-testdata/              sample.ckz / rec1.ckz / expected.json
-scripts/gen_testvectors.py   генерация векторов и примеров (Python + cryptography)
 build.sh / build.ps1 / Makefile  кросс-сборки linux/darwin/windows × amd64/arm64
-
 ```
 # 📜 Лицензия
 

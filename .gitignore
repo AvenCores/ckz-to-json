@@ -1,3 +1,9 @@
+# build artifacts
 dist/
 *.exe
+*.zip
+*.tar.gz
+
+# runtime data
+*.ckz
 *.log

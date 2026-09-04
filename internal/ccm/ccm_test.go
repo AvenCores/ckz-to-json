@@ -2,53 +2,66 @@ package ccm
 
 import (
 	"encoding/hex"
-	"encoding/json"
-	"os"
+	"strconv"
+	"strings"
 	"testing"
 )
 
 type vector struct {
-	Key    string `json:"key"`
-	Nonce  string `json:"nonce"`
-	PT     string `json:"pt"`
-	AAD    string `json:"aad"`
-	CT     string `json:"ct"`
-	TagLen int    `json:"tagLen"`
+	key    string
+	nonce  string
+	pt     string
+	aad    string
+	ct     string
+	tagLen int
 }
 
-func loadVectors(t *testing.T) []vector {
-	t.Helper()
-	data, err := os.ReadFile("testdata/vectors.json")
+// decodeAAD accepts hex or the "@N" marker for generated pattern bytes.
+func decodeAAD(s string) []byte {
+	if strings.HasPrefix(s, "@") {
+		n, err := strconv.Atoi(s[1:])
+		if err != nil {
+			panic("bad aad marker: " + s)
+		}
+		b := make([]byte, n)
+		for i := range b {
+			b[i] = byte(i % 251)
+		}
+		return b
+	}
+	b, err := hex.DecodeString(s)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
-	var vs []vector
-	if err := json.Unmarshal(data, &vs); err != nil {
-		t.Fatal(err)
+	return b
+}
+
+func mustHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
 	}
-	if len(vs) == 0 {
-		t.Fatal("no vectors")
-	}
-	return vs
+	return b
 }
 
 func TestVectors(t *testing.T) {
-	for i, v := range loadVectors(t) {
-		key, _ := hex.DecodeString(v.Key)
-		nonce, _ := hex.DecodeString(v.Nonce)
-		pt, _ := hex.DecodeString(v.PT)
-		aad, _ := hex.DecodeString(v.AAD)
-		ct, _ := hex.DecodeString(v.CT)
+	for i, v := range ccmVectors {
+		key := mustHex(v.key)
+		nonce := mustHex(v.nonce)
+		pt := mustHex(v.pt)
+		aad := decodeAAD(v.aad)
+		ct := mustHex(v.ct)
 
-		got, err := Encrypt(key, nonce, pt, aad, v.TagLen)
+		got, err := Encrypt(key, nonce, pt, aad, v.tagLen)
 		if err != nil {
 			t.Fatalf("vector %d: encrypt: %v", i, err)
 		}
 		if string(got) != string(ct) {
-			t.Fatalf("vector %d: ct mismatch\n got %x\nwant %x", i, got, ct)
+			t.Fatalf("vector %d: ct mismatch (tag %d, nonce %d, pt %d, aad %d)",
+				i, v.tagLen, len(nonce), len(pt), len(aad))
 		}
 
-		out, err := Decrypt(key, nonce, ct, aad, v.TagLen)
+		out, err := Decrypt(key, nonce, ct, aad, v.tagLen)
 		if err != nil {
 			t.Fatalf("vector %d: decrypt: %v", i, err)
 		}
@@ -59,21 +72,21 @@ func TestVectors(t *testing.T) {
 }
 
 func TestCorruptedDataRejected(t *testing.T) {
-	v := loadVectors(t)[6]
-	key, _ := hex.DecodeString(v.Key)
-	nonce, _ := hex.DecodeString(v.Nonce)
-	aad, _ := hex.DecodeString(v.AAD)
-	ct, _ := hex.DecodeString(v.CT)
+	v := ccmVectors[len(ccmVectors)-1]
+	key := mustHex(v.key)
+	nonce := mustHex(v.nonce)
+	aad := decodeAAD(v.aad)
+	ct := mustHex(v.ct)
 
 	badCT := append([]byte(nil), ct...)
 	badCT[0] ^= 0xff
-	if _, err := Decrypt(key, nonce, badCT, aad, v.TagLen); err == nil {
+	if _, err := Decrypt(key, nonce, badCT, aad, v.tagLen); err == nil {
 		t.Fatal("corrupted ciphertext accepted")
 	}
-	if _, err := Decrypt(key, nonce, ct, append([]byte("x"), aad...), v.TagLen); err == nil {
+	if _, err := Decrypt(key, nonce, ct, append([]byte("x"), aad...), v.tagLen); err == nil {
 		t.Fatal("wrong associated data accepted")
 	}
-	if _, err := Decrypt(key, nonce, ct, aad, v.TagLen); err != nil {
+	if _, err := Decrypt(key, nonce, ct, aad, v.tagLen); err != nil {
 		t.Fatalf("valid input rejected: %v", err)
 	}
 }
