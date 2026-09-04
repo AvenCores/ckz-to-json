@@ -27,7 +27,7 @@ func File(noDialog bool, patterns ...string) (string, error) {
 		return "", errors.New("нет терминала: укажите файл флагом -i/--in")
 	}
 	if !noDialog {
-		fmt.Fprintf(os.Stderr, "Открывается окно выбора файла %s... Выберите файл в диалоге.\n", strings.Join(patterns, ", "))
+		fmt.Fprintln(os.Stderr, Paint(FgGray, fmt.Sprintf("Открывается окно выбора файла %s... Выберите файл в диалоге.", strings.Join(patterns, ", "))))
 		p, err := nativeDialog(patterns)
 		switch {
 		case err == nil:
@@ -130,12 +130,12 @@ func pickTerminal(patterns []string) (string, error) {
 	sort.Strings(names)
 
 	if len(names) > 0 {
-		fmt.Fprintf(os.Stderr, "Доступные файлы %s в %s:\n", strings.Join(patterns, ", "), cwd)
+		fmt.Fprintln(os.Stderr, Paint(FgGray, fmt.Sprintf("Доступные файлы %s в %s:", strings.Join(patterns, ", "), cwd)))
 		for i, n := range names {
-			fmt.Fprintf(os.Stderr, "  [%d] %s\n", i+1, n)
+			fmt.Fprintf(os.Stderr, "  %s %s\n", Paint(Bold+";"+FgYellow, fmt.Sprintf("[%d]", i+1)), n)
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "В папке %s нет файлов %s\n", cwd, strings.Join(patterns, ", "))
+		fmt.Fprintln(os.Stderr, Paint(FgGray, fmt.Sprintf("В папке %s нет файлов %s", cwd, strings.Join(patterns, ", "))))
 	}
 
 	line, err := ReadLine(fmt.Sprintf("Введите номер файла или путь (%s): ", strings.Join(patterns, ", ")))

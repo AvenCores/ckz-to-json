@@ -14,9 +14,9 @@ func Choice(title string, options []string) (int, error) {
 	for {
 		fmt.Fprintln(os.Stderr, title)
 		for i, o := range options {
-			fmt.Fprintf(os.Stderr, "  [%d] %s\n", i+1, o)
+			fmt.Fprintf(os.Stderr, "  %s %s\n", Paint(Bold+";"+FgYellow, fmt.Sprintf("[%d]", i+1)), o)
 		}
-		line, err := ReadLine("Выбор: ")
+		line, err := ReadLine(Paint(Bold+";"+FgCyan, "  Выбор: "))
 		if err != nil {
 			return 0, ErrCanceled
 		}
@@ -24,7 +24,7 @@ func Choice(title string, options []string) (int, error) {
 		if cerr == nil && n >= 1 && n <= len(options) {
 			return n - 1, nil
 		}
-		fmt.Fprintf(os.Stderr, "введите число от 1 до %d\n", len(options))
+		fmt.Fprintln(os.Stderr, Paint(FgRed, fmt.Sprintf("  введите число от 1 до %d", len(options))))
 	}
 }
 
@@ -35,7 +35,7 @@ func Confirm(q string, def bool) (bool, error) {
 	if def {
 		hint = "[Y/n]"
 	}
-	line, err := ReadLine(q + " " + hint + ": ")
+	line, err := ReadLine(q + " " + Paint(FgGray, hint) + ": ")
 	if err != nil {
 		return def, err
 	}

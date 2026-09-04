@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"ckz2json/internal/prompt"
 )
@@ -25,12 +26,13 @@ const (
 // runInteractive shows the main menu until the user picks "Выход".
 func runInteractive() error {
 	for {
-		fmt.Printf("=== ckz2json %s ===\n\n", version)
-		mode, err := prompt.Choice("Выберите режим:", []string{
-			"Расшифровать .ckz (-i, -p, --format, -o, --stdout)",
-			"Зашифровать .json -> .ckz (-e, --iter, --key-bits, --tag-bits, --adata, -o)",
-			"Проверить структуру .ckz без пароля (-c)",
-			"Выход",
+		prompt.Clear()
+		drawBanner()
+		mode, err := prompt.Choice(h1("выберите режим работы"), []string{
+			"расшифровать .ckz         " + hint("-i, -p, --format, -o, --stdout"),
+			"зашифровать .json -> .ckz " + hint("-e, --iter, --key-bits, --tag-bits, --adata, -o"),
+			"проверить структуру .ckz  " + hint("-c, пароль не потребуется"),
+			"выход",
 		})
 		if err != nil || mode == modeExit {
 			return nil
@@ -40,9 +42,9 @@ func runInteractive() error {
 		case err == nil, errors.Is(err, errSilent), errors.Is(err, prompt.ErrCanceled):
 			// already reported / user aborted the wizard
 		default:
-			fmt.Fprintln(os.Stderr, "Ошибка:", err)
+			fmt.Fprintln(os.Stderr, "\n"+prompt.Paint(prompt.FgRed, "Ошибка: ")+err.Error())
 		}
-		prompt.WaitEnter("\nНажмите Enter, чтобы вернуться в меню... ")
+		prompt.WaitEnter("\n" + hint("нажмите Enter для возврата в меню") + ": ")
 	}
 }
 
@@ -57,53 +59,60 @@ func runWizard(mode int) error {
 	case modeCheck:
 		cfg.check = true
 	}
+	step := 0
+	next := func(s string) string {
+		step++
+		return h1(fmt.Sprintf("шаг %d - %s", step, s))
+	}
 
-	useTerminal, err := prompt.Choice("Способ выбора входных файлов (--no-dialog):", []string{
+	how, err := prompt.Choice(next("как выбирать входные файлы")+hint("  (--no-dialog)"), []string{
 		"окно выбора файла операционной системы (по умолчанию)",
-		"нумерованный список в терминале или ввод пути/папки вручную",
+		"нумерованный список в терминале / ручной ввод пути или папки",
 	})
 	if err != nil {
 		return err
 	}
-	cfg.noDialog = useTerminal == 1
+	cfg.noDialog = how == 1
 
 	files, err := chooseInputs(cfg.noDialog, glob)
 	if err != nil {
 		return err
 	}
+	fmt.Fprintln(os.Stderr, hint(fmt.Sprintf("выбрано входных файлов: %d", len(files))))
 
 	switch mode {
 	case modeDecrypt:
-		cfg.format, err = chooseFormat()
+		cfg.format, err = chooseFormat(next("формат результата"))
 		if err != nil {
 			return err
 		}
-		if err := chooseOutput(cfg, files, true); err != nil {
+		if err := chooseOutput(cfg, files, true, next("куда сохранить результат")); err != nil {
 			return err
 		}
 	case modeEncrypt:
-		if err := askEncryptParams(cfg); err != nil {
+		if err := askEncryptParams(cfg, next("параметры шифрования")); err != nil {
 			return err
 		}
-		if err := chooseOutput(cfg, files, false); err != nil {
+		if err := chooseOutput(cfg, files, false, next("куда сохранить результат")); err != nil {
 			return err
 		}
 	}
 
+	fmt.Fprintln(os.Stderr, next("дополнительные параметры"))
 	switch mode {
 	case modeDecrypt, modeEncrypt:
-		cfg.force, err = prompt.Confirm("Перезаписывать существующие выходные файлы (-f)?", false)
+		cfg.force, err = prompt.Confirm("перезаписывать существующие выходные файлы? "+hint("(-f)"), false)
 		if err != nil {
 			return err
 		}
 	}
-	cfg.quiet, err = prompt.Confirm("Тихий режим: выводить только ошибки (-q)?", false)
+	cfg.quiet, err = prompt.Confirm("тихий режим: выводить только ошибки? "+hint("(-q)"), false)
 	if err != nil {
 		return err
 	}
 
 	printSummary(cfg, files)
-	start, err := prompt.Confirm("Запустить?", true)
+	start, err := prompt.Confirm(ok("запустить?"), true)
 	if err != nil || !start {
 		return nil
 	}
@@ -123,7 +132,8 @@ func chooseInputs(noDialog bool, glob string) ([]string, error) {
 			return nil, err
 		}
 		files = append(files, p)
-		more, cerr := prompt.Confirm("Добавить ещё файл или целую папку (пакетный режим)?", false)
+		fmt.Fprintln(os.Stderr, ok("  + ")+p)
+		more, cerr := prompt.Confirm("добавить ещё файл или целую папку? "+hint("(пакетный режим)"), false)
 		if cerr != nil || !more {
 			break
 		}
@@ -131,8 +141,8 @@ func chooseInputs(noDialog bool, glob string) ([]string, error) {
 	return files, nil
 }
 
-func chooseFormat() (string, error) {
-	i, err := prompt.Choice("Формат результата (--format):", []string{
+func chooseFormat(title string) (string, error) {
+	i, err := prompt.Choice(title+hint("  (--format)"), []string{
 		"json - человекочитаемый JSON (по умолчанию)",
 		"csv - таблица cookies",
 		"cookies - Netscape cookies.txt для импорта в браузер/curl",
@@ -150,7 +160,7 @@ func chooseFormat() (string, error) {
 }
 
 // chooseOutput covers -o/--out and --stdout.
-func chooseOutput(cfg *config, files []string, allowStdout bool) error {
+func chooseOutput(cfg *config, files []string, allowStdout bool, title string) error {
 	type kind int
 	const (
 		outDefault kind = iota
@@ -161,13 +171,13 @@ func chooseOutput(cfg *config, files []string, allowStdout bool) error {
 	labels := []string{"сохранить рядом с входным файлом (по умолчанию)"}
 	if allowStdout {
 		kinds = append(kinds, outStdout)
-		labels = append(labels, "вывести в stdout (--stdout)")
+		labels = append(labels, "вывести в stdout  "+hint("(--stdout)"))
 	}
 	if len(files) == 1 && !isDir(files[0]) {
 		kinds = append(kinds, outManual)
-		labels = append(labels, "указать путь вручную (-o/--out)")
+		labels = append(labels, "указать путь вручную  "+hint("(-o/--out)"))
 	}
-	i, err := prompt.Choice("Куда сохранить результат:", labels)
+	i, err := prompt.Choice(title, labels)
 	if err != nil {
 		return err
 	}
@@ -176,12 +186,12 @@ func chooseOutput(cfg *config, files []string, allowStdout bool) error {
 		cfg.stdout = true
 	case outManual:
 		for {
-			p := prompt.CleanPath(prompt.Input("  путь к выходному файлу (-o): ", ""))
+			p := prompt.CleanPath(prompt.Input(hint("  путь к выходному файлу: "), ""))
 			if p != "" {
 				cfg.output = p
 				return nil
 			}
-			fmt.Fprintln(os.Stderr, "  путь не может быть пустым")
+			fmt.Fprintln(os.Stderr, prompt.Paint(prompt.FgRed, "  путь не может быть пустым"))
 		}
 	}
 	return nil
@@ -193,32 +203,33 @@ func isDir(p string) bool {
 }
 
 // askEncryptParams covers --iter, --key-bits, --tag-bits and --adata.
-func askEncryptParams(cfg *config) error {
-	fmt.Fprintln(os.Stderr, "Параметры шифрования (Enter - значения по умолчанию):")
+func askEncryptParams(cfg *config, title string) error {
+	fmt.Fprintln(os.Stderr, title+hint("  (--iter, --key-bits, --tag-bits, --adata)"))
+	fmt.Fprintln(os.Stderr, hint("  Enter - оставить значение по умолчанию"))
 	for {
-		s := prompt.Input("  итерации PBKDF2 --iter [100000]: ", "")
+		s := prompt.Input(hint("  итерации PBKDF2 --iter [100000]: "), "")
 		if s == "" {
 			break
 		}
 		n, cerr := strconv.Atoi(s)
 		if cerr != nil || n < 1 {
-			fmt.Fprintln(os.Stderr, "  нужно целое число >= 1")
+			fmt.Fprintln(os.Stderr, prompt.Paint(prompt.FgRed, "  нужно целое число >= 1"))
 			continue
 		}
 		cfg.iter = n
 		break
 	}
-	i, err := prompt.Choice("  размер ключа --key-bits:", []string{"128", "192", "256 (по умолчанию)"})
+	i, err := prompt.Choice(hint("  размер ключа --key-bits"), []string{"128", "192", "256 (по умолчанию)"})
 	if err != nil {
 		return err
 	}
 	cfg.keyBits = []int{128, 192, 256}[i]
-	i, err = prompt.Choice("  размер тега --tag-bits:", []string{"64", "96", "128 (по умолчанию)"})
+	i, err = prompt.Choice(hint("  размер тега --tag-bits"), []string{"64", "96", "128 (по умолчанию)"})
 	if err != nil {
 		return err
 	}
 	cfg.tagBits = []int{64, 96, 128}[i]
-	cfg.adata = prompt.Input("  ассоциированные данные --adata (Enter - пусто): ", "")
+	cfg.adata = prompt.Input(hint("  ассоциированные данные --adata [пусто]: "), "")
 	return nil
 }
 
@@ -237,15 +248,24 @@ func printSummary(cfg *config, files []string) {
 	case cfg.output != "":
 		out = cfg.output
 	}
-	fmt.Fprintf(os.Stderr, "\nСводка:\n  режим:  %s\n  вход:   %s\n", mode, strings.Join(files, "; "))
+	kv := func(k, v string) {
+		pad := 14 - utf8.RuneCountInString(k)
+		if pad < 1 {
+			pad = 1
+		}
+		fmt.Fprintf(os.Stderr, "  %s %s\n", hint(k+":"), strings.Repeat(" ", pad)+v)
+	}
+	fmt.Fprintln(os.Stderr, h1("сводка"))
+	kv("режим", mode)
+	kv("вход", strings.Join(files, "; "))
 	if !cfg.check && !cfg.encrypt {
-		fmt.Fprintf(os.Stderr, "  формат: %s\n", cfg.format)
+		kv("формат", cfg.format)
 	}
 	if cfg.check {
-		fmt.Fprintf(os.Stderr, "  тихий режим: %s\n\n", yesNo(cfg.quiet))
+		kv("тихий режим", yesNo(cfg.quiet))
 		return
 	}
-	fmt.Fprintf(os.Stderr, "  вывод:  %s\n", out)
+	kv("вывод", out)
 	if cfg.encrypt {
 		iter, keyBits, tagBits := cfg.iter, cfg.keyBits, cfg.tagBits
 		if iter == 0 {
@@ -261,14 +281,8 @@ func printSummary(cfg *config, files []string) {
 		if adata == "" {
 			adata = "(пусто)"
 		}
-		fmt.Fprintf(os.Stderr, "  iter=%d, ключ=%d бит, тег=%d бит, adata=%s\n", iter, keyBits, tagBits, adata)
+		kv("параметры", fmt.Sprintf("iter=%d, ключ=%d бит, тег=%d бит, adata=%s", iter, keyBits, tagBits, adata))
 	}
-	fmt.Fprintf(os.Stderr, "  перезапись (-f): %s\n  тихий режим (-q): %s\n\n", yesNo(cfg.force), yesNo(cfg.quiet))
-}
-
-func yesNo(b bool) string {
-	if b {
-		return "да"
-	}
-	return "нет"
+	kv("перезапись", yesNo(cfg.force))
+	kv("тихий режим", yesNo(cfg.quiet))
 }

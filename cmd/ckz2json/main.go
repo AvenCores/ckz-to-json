@@ -189,7 +189,12 @@ func execute(cfg *config, files []string) error {
 		return nil
 	}
 	if !cfg.quiet && len(inputs) > 1 {
-		fmt.Printf("Обработано файлов: %d, с ошибками: %d\n", len(inputs), failed)
+		msg := fmt.Sprintf("Обработано файлов: %d, с ошибками: %d", len(inputs), failed)
+		color := prompt.FgRed
+		if failed == 0 {
+			color = prompt.FgGreen
+		}
+		fmt.Println(prompt.Paint(color, msg))
 	}
 	if failed > 0 {
 		return errSilent
@@ -423,7 +428,7 @@ func saveFile(out string, data []byte, quiet bool) error {
 		return err
 	}
 	if !quiet {
-		fmt.Printf("Файл сохранен по пути: %s\n", out)
+		fmt.Println(prompt.Paint(prompt.FgGreen, fmt.Sprintf("Файл сохранен по пути: %s", out)))
 	}
 	return nil
 }
